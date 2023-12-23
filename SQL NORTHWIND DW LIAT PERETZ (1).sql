@@ -1,0 +1,129 @@
+
+
+--creating a procedure that insert all data into new DB
+
+
+Use NORTHWND
+go
+
+--creating a function to set cheap/expensive
+--select * from Products
+--select UnitPrice from Products
+--select avg(UnitPrice) AS ProductType from Products
+
+
+CREATE FUNCTION FN_PRDTYP(@productID int)
+		RETURNS NVARCHAR(20)
+		AS
+		BEGIN
+		DECLARE @avg_unitprice int,
+				@cheaporexpensive int,
+				@biggerorloweravg nvarchar(20)
+		SET @avg_unitprice= (select AVG(UnitPrice) from NORTHWND.dbo.Products)
+		SET @cheaporexpensive= (select UnitPrice from NORTHWND.dbo.Products where ProductID=@productID) 
+		SET @biggerorloweravg= CASE when @biggerorloweravg > @avg_unitprice then 'expensive'
+									when @biggerorloweravg < @avg_unitprice then 'cheap'			
+		END
+		RETURN @biggerorloweravg
+		END 
+		GO
+
+
+--creating DIM_DATE table
+CREATE TABLE [dbo].[Dim_Date] (
+								 [DateKey] [int] PRIMARY KEY not NULL,
+								 [Date] [date] not null,
+								 [Year] [int] not null,
+								 [Quarter] [int] not null,
+								 [Month] [int] not null,
+								 [MonthName] NVARCHAR (20) not null, 
+																		)
+
+
+--creating procedure to restore DB into a new one
+go 
+CREATE PROCEDURE Northwind_NEW_DW
+		AS
+		BEGIN
+TRUNCATE TABLE Dim_Orders 
+TRUNCATE TABLE Dim_Customers 
+TRUNCATE TABLE Dim_Employees
+TRUNCATE TABLE Dim_Products
+TRUNCATE TABLE Fact_Sales
+
+--inserting data
+
+INSERT INTO Northwind_DW.dbo.Dim_Orders (OrderBK, ShipCity, ShipRegion, ShipCountry)
+SELECT 
+		OrderID,
+		isnull(shipcity,'NULL'),
+		isnull(ShipRegion,'NULL'),
+		isnull(ShipCountry,'NULL')
+FROM NORTHWND.dbo.Orders
+
+
+INSERT INTO Northwind_DW.dbo.Dim_Customers (CustomerBK, CustomerName, City, Region, Country)
+SELECT 
+		CustomerID, 
+		CompanyName,
+		isnull(City,'NULL'),
+		isnull(Region,'NULL'),
+		isnull(Country,'NULL')
+FROM NORTHWND.dbo.Customers
+
+INSERT INTO Northwind_DW.dbo.Dim_Employees (EmployeeBK, LastName, FirstName, FullName, Title, BirthDate, Age, HireDate, Seniority, City, Country, Photo, ReportsTo)
+SELECT 
+		EmployeeID,
+		lastname,
+		FirstName,
+		FirstName + ' ' + lastname AS Full_Name,
+--clear nulls
+		isnull (Title,'NULL'),
+		isnull (BirthDate,'01/01/1900'),
+		isnull (datediff(YEAR, birthdate, getdate()),-1),
+		isnull (HireDate,'01/01/1900'),
+		isnull (datediff(YEAR, HireDate, getdate()),-1),
+		isnull (City,'NULL'),
+		isnull (Country,'NULL'),
+		isnull (Photo,'NULL'),
+		isnull (ReportsTo,EmployeeID)
+FROM NORTHWND.dbo.Employees
+
+
+INSERT INTO Northwind_DW.dbo.Dim_Products (ProductBK, ProductName, ProductUnitPrice, ProductType, CategoryName, SupplierName, Discontinued)
+SELECT
+		ProductID,
+		ProductName,
+		ISNULL(UnitPrice, 0) AS UnitPrice,
+		dbo.FN_PRDTYP (P.ProductID) AS ProductType, C.CategoryName, S.CompanyName, Discontinued 
+		from NORTHWND.dbo.Products P
+--join table		
+join NORTHWND.dbo.Categories C on P.CategoryID = C.CategoryID
+join NORTHWND.dbo.Suppliers S on P.SupplierID = S.SupplierID
+
+
+INSERT INTO Northwind_DW.dbo.Fact_Sales (OrderSK, ProductSK, DateKey, CustomerSK, EmployeeSK, UnitPrice, Quantity, Discount)
+SELECT 
+	Do.OrderSK,
+	Dp.ProductSK,
+	Dd.DateKey,
+	Dc.CustomerSK,
+	De.EmployeeSK,
+	od.UnitPrice,
+	od.Quantity,
+	od.Discount 
+
+FROM NORTHWND.dbo.[Order Details] OD
+--join table
+	join NORTHWND.dbo.orders O on od.OrderID = O.OrderID
+	join Northwind_DW.dbo.Dim_Orders Do on O.OrderID = Do.OrderBK
+	join Northwind_DW.dbo.Dim_Products Dp on OD.ProductID = Dp.ProductBK
+	join Northwind_DW.dbo.Dim_Employees De on O.EmployeeID = De.EmployeeBK
+	join Northwind_DW.dbo.Dim_Customers Dc on O.CustomerID = Dc.CustomerBK
+	join Northwind_DW.dbo.Dim_Date Dd on O.OrderDate = Dd.[DATE]
+
+
+
+
+
+END
