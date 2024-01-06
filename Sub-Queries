@@ -1,0 +1,141 @@
+se NORTHWND
+go
+
+--hm subqueries
+
+--q1
+select CustomerID, City from Customers
+where city =		(
+						select city	from Customers 
+						where CustomerID= 'fissa'
+						)
+						
+
+
+--q2
+select * from Products
+
+select ProductName from Products
+where UnitPrice >		(
+							select ProductID from Products
+							where ProductID=67
+							)
+
+--q3
+select ProductName, UnitPrice from Products
+where UnitPrice>	(
+						select UnitPrice from Products
+						where ProductName like '%chang%'
+						)
+
+--q4
+select * from Orders
+where OrderDate >=	(
+						select orderdate from Orders
+						where OrderID = 10533
+						)
+and OrderID != 10533
+order by OrderDate
+
+
+--q5
+select ProductID, ProductName, UnitPrice from Products
+where UnitPrice >	(
+						select avg(UnitPrice) from Products
+					)
+
+--q6
+select * from Products
+where UnitsInStock <	(
+							select MIN(UnitsInStock) from Products
+							where CategoryID ='7'
+						)
+
+
+--q4
+select OrderID, Freight from Orders
+where Freight >		all (
+							select Freight from Orders
+							where ShipVia=2
+						)
+
+--q8
+select ProductName, UnitPrice, CategoryID from Products
+where UnitPrice in	(
+						select UnitPrice from Products
+						where CategoryID =7
+
+					)
+
+--q9
+select ProductName, UnitPrice, CategoryID from Products
+where UnitPrice >	all (
+						select MIN(UnitPrice) from Products
+						where CategoryID =3
+
+					)
+
+--q10
+select ShipCountry, OrderID from Orders
+where Freight >		(
+						select AVG(Freight) from Orders
+						where YEAR(OrderDate)>1997
+
+					)
+
+
+--q11
+select OrderID, OrderDate from Orders
+where ShipCountry in ('Spain' , 'Germany' ,'US')
+and
+MONTH (OrderDate) = 7
+
+
+--q12
+select * from Orders where EmployeeID = 5 order by OrderDate Desc
+
+select max(OrderDate)
+					from Orders as O2
+					where O2.EmployeeID = 5
+
+
+
+--q13
+select S.SupplierID, S.CompanyName, P.ProductName, P.UnitPrice
+from Suppliers S
+inner join Products P
+on S.SupplierID = P.SupplierID
+order by S.CompanyName, P.UnitPrice
+
+
+--q14.
+
+select distinct P.ProductName
+from Products P
+inner join Categories C
+on P.CategoryID = C.CategoryID
+inner join [Order Details] OD 
+on P.ProductID= OD.ProductID
+inner join Orders O 
+on O.OrderID=OD.OrderID
+inner join Customers CU 
+on O.CustomerID=CU.CustomerID
+where CU.Region is null 
+and
+C.CategoryName= 'seafood'
+				
+
+
+--15
+select * from Suppliers
+select * from Categories
+select * from Products
+
+select S.CompanyName from Suppliers S
+inner join Products P
+on P.SupplierID=S.SupplierID
+inner join Categories C
+on C.CategoryID= P.CategoryID
+where C.CategoryName like '%condiment%'
+
+--end
