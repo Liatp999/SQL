@@ -1,0 +1,132 @@
+- scalar functions clause
+
+use northwnd
+go
+
+--q1
+select*
+from Customers
+
+--I
+select CompanyName + ' ' + CustomerID , CHARINDEX('t' , CompanyName)
+from Customers
+--II
+select CompanyName , CHARINDEX('t' , CompanyName)
+from Customers
+where CHARINDEX('t' , CompanyName) = 0
+
+
+--q2
+select *
+from Employees
+
+select lower(LastName), UPPER(firstname)
+from Employees
+where EmployeeID between 2 and 4 
+
+--q3
+select *
+from Orders
+
+select OrderID, DATEDIFF(yyyy, OrderDate, GETDATE())
+from Orders
+
+--q4
+select OrderID, DATENAME(dw,OrderDate) , YEAR(orderdate)
+from Orders
+
+--q5
+select *
+from Categories
+
+select CategoryName, Description,  CHARINDEX('e', Description,3)
+from Categories
+
+--q6
+select *
+from Employees
+
+select FirstName, LastName ,SUBSTRING(FirstName , 1 , 2) + ' ' + SUBSTRING(LastName, 1 ,2 ) USERNAME
+from Employees
+
+--q7
+select *
+from Products
+
+select ProductID,ProductName, REPLACE(ProductName, '/', '-')
+from Products
+
+
+--q8
+select GETDATE()
+
+--q9
+select *
+from Orders
+
+select CustomerID, OrderID, OrderDate, OrderDate +60
+from Orders
+
+--q10
+select *
+from Customers
+
+select CompanyName, LEN(CompanyName),City ,LEN(City)
+from Customers
+
+--q11
+select *
+from Products
+
+select ProductID, round (UnitPrice * 1.14,0) 
+from Products
+
+--q12
+select *
+from Employees
+
+select CAST (LEN(EmployeeID) as nvarchar(12)) + ' ' + LastName, BirthDate
+from Employees
+
+--q13
+select *
+from Employees
+--do again
+select UPPER(LastName), REPLACE (BirthDate, '-', '/')
+from Employees
+where FirstName like 'a%' and firstname like 'b%'
+
+--q14
+select *
+from Products
+
+select ProductID + ' ' + SupplierID as [ProductID-SupplierID] , CEILING (UnitPrice + 10.54)
+from Products
+where UnitPrice + 10.54 > 30
+
+--q15
+select * 
+from Employees
+
+select ISNULL(cast(ReportsTo as nvarchar),'ceo') as [new_reports], FirstName,
+CONVERT(varchar, BirthDate, 110) as [BirthDate_110],
+LastName+' '+cast(HireDate as nvarchar) as [name&hiredate]
+From Employees
+Where len(LastName)>len(FirstName)
+
+--q16
+select *
+from Employees
+
+select LastName, SUBSTRING(LastName , 1 , 3)
+from Employees
+where LastName like '%n%'
+
+--q17
+select LastName
+from Employees
+
+--q18
+select OrderID, OrderDate, RequiredDate
+From Orders
+Where DateDiff(MONTH,RequiredDate,OrderDate)=3
